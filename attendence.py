@@ -4,16 +4,19 @@ from PIL import Image, UnidentifiedImageError
 from dotenv import load_dotenv
 import os
 import pandas as pd
-import imghdr
 
 # --- Configure Gemini API ---
 load_dotenv(dotenv_path="keys.env")
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
-# --- Helper to detect mime type ---
+# --- Detect image MIME type using PIL ---
 def get_mime_type(file):
-    img_type = imghdr.what(None, file.getvalue())
-    return f"image/{img_type}" if img_type else "image/jpeg"
+    try:
+        image = Image.open(file)
+        format = image.format.lower()
+        return f"image/{format}"
+    except:
+        return "image/jpeg"
 
 # --- Extract from Meeting Screenshot ---
 def extract_attendance_from_image(image_file):
@@ -92,7 +95,7 @@ if screenshot_file and attendance_list_file:
 
         extracted_names = [str(name).strip() for name in attendance_df["Name"]]
 
-        # Step 3: Partial matching logic
+        # Step 3: Partial match logic
         present = []
         absent = []
 
@@ -133,3 +136,4 @@ if screenshot_file and attendance_list_file:
         st.error("Invalid image. Please upload a valid JPG, JPEG, or PNG.")
     except Exception as e:
         st.error(f"Error: {e}")
+
